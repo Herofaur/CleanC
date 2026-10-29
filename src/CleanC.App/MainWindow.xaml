@@ -71,14 +71,14 @@
                 <StackPanel>
                     <TextBlock Text="{Binding DriveTitle}" Foreground="{StaticResource MutedBrush}" />
                     <TextBlock Text="{Binding DriveUsageText}" FontSize="18" FontWeight="SemiBold" Margin="0,8" />
-                    <ProgressBar Value="{Binding DriveUsedPercent}" Maximum="100" Height="7" Foreground="#2F6FED" Background="#E7ECF5" />
+                    <ProgressBar Value="{Binding DriveUsedPercent, Mode=OneWay}" Maximum="100" Height="7" Foreground="#2F6FED" Background="#E7ECF5" />
                 </StackPanel>
             </Border>
             <Border Grid.Column="1" Style="{StaticResource Card}" Margin="8,0">
                 <StackPanel>
                     <TextBlock Text="已扫描容量" Foreground="{StaticResource MutedBrush}" />
                     <TextBlock Text="{Binding ScannedBytes, Converter={StaticResource ByteSizeConverter}}" FontSize="24" FontWeight="SemiBold" Margin="0,8,0,3" />
-                    <TextBlock Foreground="{StaticResource MutedBrush}"><Run Text="{Binding ScannedFiles, StringFormat={}{0:N0}}"/><Run Text=" 个文件"/></TextBlock>
+                    <TextBlock Foreground="{StaticResource MutedBrush}"><Run Text="{Binding ScannedFiles, Mode=OneWay, StringFormat={}{0:N0}}"/><Run Text=" 个文件"/></TextBlock>
                 </StackPanel>
             </Border>
             <Border Grid.Column="2" Style="{StaticResource Card}" Margin="8,0">
@@ -91,8 +91,8 @@
             <Border Grid.Column="3" Style="{StaticResource Card}" Margin="8,0,0,0">
                 <StackPanel>
                     <TextBlock Text="扫描统计" Foreground="{StaticResource MutedBrush}" />
-                    <TextBlock FontSize="18" FontWeight="SemiBold" Margin="0,8,0,3"><Run Text="{Binding ScannedDirectories, StringFormat={}{0:N0}}"/><Run Text=" 个目录"/></TextBlock>
-                    <TextBlock Foreground="{StaticResource MutedBrush}"><Run Text="耗时 "/><Run Text="{Binding ElapsedText}"/><Run Text=" · 跳过 "/><Run Text="{Binding AccessErrorCount}"/></TextBlock>
+                    <TextBlock FontSize="18" FontWeight="SemiBold" Margin="0,8,0,3"><Run Text="{Binding ScannedDirectories, Mode=OneWay, StringFormat={}{0:N0}}"/><Run Text=" 个目录"/></TextBlock>
+                    <TextBlock Foreground="{StaticResource MutedBrush}"><Run Text="耗时 "/><Run Text="{Binding ElapsedText, Mode=OneWay}"/><Run Text=" · 跳过 "/><Run Text="{Binding AccessErrorCount, Mode=OneWay}"/></TextBlock>
                 </StackPanel>
             </Border>
         </Grid>
@@ -108,15 +108,15 @@
                         </StackPanel>
                         <DataGrid Grid.Row="1" ItemsSource="{Binding LargestDirectories}">
                             <DataGrid.Columns>
-                                <DataGridTextColumn Header="目录" Binding="{Binding Name}" Width="220" />
-                                <DataGridTextColumn Header="完整路径" Binding="{Binding FullPath}" Width="*" />
+                                <DataGridTextColumn Header="目录" Binding="{Binding Name, Mode=OneWay}" Width="220" />
+                                <DataGridTextColumn Header="完整路径" Binding="{Binding FullPath, Mode=OneWay}" Width="*" />
                                 <DataGridTemplateColumn Header="占比" Width="180">
                                     <DataGridTemplateColumn.CellTemplate><DataTemplate>
-                                        <Grid Margin="4,8"><ProgressBar Value="{Binding SharePercent}" Maximum="100" Height="10" Foreground="#5A84E8" Background="#E8EDF6"/><TextBlock Text="{Binding SharePercent, StringFormat={}{0:0.0}%}" HorizontalAlignment="Right" Margin="0,-6,0,0" FontSize="11"/></Grid>
+                                        <Grid Margin="4,8"><ProgressBar Value="{Binding SharePercent, Mode=OneWay}" Maximum="100" Height="10" Foreground="#5A84E8" Background="#E8EDF6"/><TextBlock Text="{Binding SharePercent, Mode=OneWay, StringFormat={}{0:0.0}%}" HorizontalAlignment="Right" Margin="0,-6,0,0" FontSize="11"/></Grid>
                                     </DataTemplate></DataGridTemplateColumn.CellTemplate>
                                 </DataGridTemplateColumn>
-                                <DataGridTextColumn Header="大小" Binding="{Binding Size, Converter={StaticResource ByteSizeConverter}}" Width="110" />
-                                <DataGridTextColumn Header="文件" Binding="{Binding FileCount, StringFormat={}{0:N0}}" Width="90" />
+                                <DataGridTextColumn Header="大小" Binding="{Binding Size, Mode=OneWay, Converter={StaticResource ByteSizeConverter}}" Width="110" />
+                                <DataGridTextColumn Header="文件" Binding="{Binding FileCount, Mode=OneWay, StringFormat={}{0:N0}}" Width="90" />
                                 <DataGridTemplateColumn Header="" Width="80"><DataGridTemplateColumn.CellTemplate><DataTemplate><Button Content="定位" Tag="{Binding FullPath}" Click="Reveal_Click" Style="{StaticResource SecondaryButton}" Padding="10,4"/></DataTemplate></DataGridTemplateColumn.CellTemplate></DataGridTemplateColumn>
                             </DataGrid.Columns>
                         </DataGrid>
@@ -137,10 +137,10 @@
                         <TextBlock Text="显示本次扫描中最大的 2,000 个文件。此页面只做分析，不会自动选择删除。" Foreground="{StaticResource MutedBrush}" Margin="6,4,0,12" />
                         <DataGrid Grid.Row="1" ItemsSource="{Binding LargestFiles}">
                             <DataGrid.Columns>
-                                <DataGridTextColumn Header="文件名" Binding="{Binding Name}" Width="230" />
-                                <DataGridTextColumn Header="完整路径" Binding="{Binding FullPath}" Width="*" />
-                                <DataGridTextColumn Header="大小" Binding="{Binding Size, Converter={StaticResource ByteSizeConverter}}" Width="110" />
-                                <DataGridTextColumn Header="修改时间" Binding="{Binding LastWriteTimeUtc, StringFormat={}{0:yyyy-MM-dd HH:mm}}" Width="150" />
+                                <DataGridTextColumn Header="文件名" Binding="{Binding Name, Mode=OneWay}" Width="230" />
+                                <DataGridTextColumn Header="完整路径" Binding="{Binding FullPath, Mode=OneWay}" Width="*" />
+                                <DataGridTextColumn Header="大小" Binding="{Binding Size, Mode=OneWay, Converter={StaticResource ByteSizeConverter}}" Width="110" />
+                                <DataGridTextColumn Header="修改时间" Binding="{Binding LastWriteTimeUtc, Mode=OneWay, StringFormat={}{0:yyyy-MM-dd HH:mm}}" Width="150" />
                                 <DataGridTemplateColumn Header="" Width="80"><DataGridTemplateColumn.CellTemplate><DataTemplate><Button Content="定位" Tag="{Binding FullPath}" Click="Reveal_Click" Style="{StaticResource SecondaryButton}" Padding="10,4"/></DataTemplate></DataGridTemplateColumn.CellTemplate></DataGridTemplateColumn>
                             </DataGrid.Columns>
                         </DataGrid>
@@ -179,10 +179,10 @@
                                 <DataGrid Grid.Row="1" ItemsSource="{Binding SelectedCleanupGroup.Candidates}" IsReadOnly="False">
                                     <DataGrid.Columns>
                                         <DataGridTemplateColumn Header="选择" Width="60"><DataGridTemplateColumn.CellTemplate><DataTemplate><CheckBox IsChecked="{Binding IsSelected, UpdateSourceTrigger=PropertyChanged}" HorizontalAlignment="Center" VerticalAlignment="Center"/></DataTemplate></DataGridTemplateColumn.CellTemplate></DataGridTemplateColumn>
-                                        <DataGridTextColumn Header="文件" Binding="{Binding Name}" Width="210" IsReadOnly="True" />
-                                        <DataGridTextColumn Header="路径" Binding="{Binding FullPath}" Width="*" IsReadOnly="True" />
-                                        <DataGridTextColumn Header="大小" Binding="{Binding Size, Converter={StaticResource ByteSizeConverter}}" Width="105" IsReadOnly="True" />
-                                        <DataGridTextColumn Header="修改时间" Binding="{Binding LastWriteTime, StringFormat={}{0:yyyy-MM-dd}}" Width="105" IsReadOnly="True" />
+                                        <DataGridTextColumn Header="文件" Binding="{Binding Name, Mode=OneWay}" Width="210" IsReadOnly="True" />
+                                        <DataGridTextColumn Header="路径" Binding="{Binding FullPath, Mode=OneWay}" Width="*" IsReadOnly="True" />
+                                        <DataGridTextColumn Header="大小" Binding="{Binding Size, Mode=OneWay, Converter={StaticResource ByteSizeConverter}}" Width="105" IsReadOnly="True" />
+                                        <DataGridTextColumn Header="修改时间" Binding="{Binding LastWriteTime, Mode=OneWay, StringFormat={}{0:yyyy-MM-dd}}" Width="105" IsReadOnly="True" />
                                         <DataGridTemplateColumn Header="" Width="76"><DataGridTemplateColumn.CellTemplate><DataTemplate><Button Content="定位" Tag="{Binding FullPath}" Click="Reveal_Click" Style="{StaticResource SecondaryButton}" Padding="9,4"/></DataTemplate></DataGridTemplateColumn.CellTemplate></DataGridTemplateColumn>
                                     </DataGrid.Columns>
                                 </DataGrid>
@@ -203,7 +203,7 @@
                 <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
                 <StackPanel Orientation="Horizontal"><Ellipse Width="8" Height="8" Fill="#3AA76D" Margin="0,0,9,0" VerticalAlignment="Center"/><TextBlock Text="{Binding StatusText}" FontWeight="SemiBold" VerticalAlignment="Center"/></StackPanel>
                 <TextBlock Grid.Column="1" Text="{Binding CurrentPath}" Foreground="{StaticResource MutedBrush}" TextTrimming="CharacterEllipsis" Margin="20,0" VerticalAlignment="Center" />
-                <ProgressBar Grid.Column="2" Width="120" Height="6" IsIndeterminate="{Binding IsScanning}" Visibility="{Binding IsScanning, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                <ProgressBar Grid.Column="2" Width="120" Height="6" IsIndeterminate="{Binding IsScanning, Mode=OneWay}" Visibility="{Binding IsScanning, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}" />
             </Grid>
         </Border>
     </Grid>
