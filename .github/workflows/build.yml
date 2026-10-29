@@ -1,0 +1,44 @@
+name: build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  windows-build:
+    runs-on: windows-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restore
+        run: dotnet restore CleanC.slnx
+
+      - name: Build
+        run: dotnet build CleanC.slnx --configuration Release --no-restore
+
+      - name: Run core tests
+        run: dotnet run --project tests/CleanC.Core.Tests/CleanC.Core.Tests.csproj --configuration Release --no-build
+
+      - name: Run WPF smoke test
+        run: dotnet run --project tests/CleanC.App.SmokeTests/CleanC.App.SmokeTests.csproj --configuration Release --no-build
+
+      - name: Publish Windows app
+        run: dotnet publish src/CleanC.App/CleanC.App.csproj --configuration Release --runtime win-x64 --self-contained false --no-restore --output artifacts/CleanC-win-x64
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: CleanC-win-x64
+          path: artifacts/CleanC-win-x64

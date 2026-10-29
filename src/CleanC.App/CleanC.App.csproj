@@ -1,0 +1,21 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\CleanC.Core\CleanC.Core.csproj" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <AssemblyName>CleanC</AssemblyName>
+    <RootNamespace>CleanC.App</RootNamespace>
+    <ApplicationIcon />
+    <Version>0.1.0</Version>
+    <Authors>CleanC contributors</Authors>
+    <Description>安全优先的 Windows 磁盘分析与清理助手</Description>
+  </PropertyGroup>
+
+</Project>
