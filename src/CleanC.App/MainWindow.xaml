@@ -36,11 +36,11 @@
                     </Border>
                     <StackPanel>
                         <TextBlock Text="CleanC" Foreground="White" FontSize="22" FontWeight="SemiBold" />
-                        <TextBlock Text="安全优先的 Windows 磁盘分析与清理助手" Foreground="#AFC0DF" FontSize="12" />
+                        <TextBlock Text="读取 WizTree CSV，智能识别可清理文件" Foreground="#AFC0DF" FontSize="12" />
                     </StackPanel>
                 </StackPanel>
                 <Border Grid.Column="1" Background="#243451" CornerRadius="8" Padding="12,7" VerticalAlignment="Center">
-                    <TextBlock Text="v0.1 · .NET 10" Foreground="#C8D4EB" />
+                    <TextBlock Text="v0.6.0 · .NET 10" Foreground="#C8D4EB" />
                 </Border>
             </Grid>
         </Border>
@@ -51,12 +51,12 @@
                     <ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
-                <TextBlock Text="扫描位置" FontWeight="SemiBold" VerticalAlignment="Center" Margin="4,0,14,0" />
-                <TextBox Grid.Column="1" Text="{Binding ScanPath, UpdateSourceTrigger=PropertyChanged}" FontSize="14" Padding="10,8"
+                <TextBlock Text="WizTree CSV" FontWeight="SemiBold" VerticalAlignment="Center" Margin="4,0,14,0" />
+                <TextBox Grid.Column="1" Text="{Binding CsvPath, UpdateSourceTrigger=PropertyChanged}" FontSize="14" Padding="10,8"
                          BorderBrush="#D8DEE9" VerticalContentAlignment="Center" IsEnabled="{Binding IsNotScanning}" />
-                <Button Grid.Column="2" Content="选择文件夹" Style="{StaticResource SecondaryButton}" Margin="10,0,0,0"
+                <Button Grid.Column="2" Content="选择 CSV" Style="{StaticResource SecondaryButton}" Margin="10,0,0,0"
                         IsEnabled="{Binding IsNotScanning}" Click="Browse_Click" />
-                <Button Grid.Column="3" Content="开始扫描" Style="{StaticResource PrimaryButton}" Margin="10,0,0,0"
+                <Button Grid.Column="3" Content="导入并分析" Style="{StaticResource PrimaryButton}" Margin="10,0,0,0"
                         IsEnabled="{Binding IsNotScanning}" Click="StartScan_Click" />
                 <Button Grid.Column="4" Content="停止" Style="{StaticResource SecondaryButton}" Margin="10,0,0,0"
                         IsEnabled="{Binding IsScanning}" Click="CancelScan_Click" />
@@ -76,7 +76,7 @@
             </Border>
             <Border Grid.Column="1" Style="{StaticResource Card}" Margin="8,0">
                 <StackPanel>
-                    <TextBlock Text="已扫描容量" Foreground="{StaticResource MutedBrush}" />
+                    <TextBlock Text="CSV 文件总量" Foreground="{StaticResource MutedBrush}" />
                     <TextBlock Text="{Binding ScannedBytes, Converter={StaticResource ByteSizeConverter}}" FontSize="24" FontWeight="SemiBold" Margin="0,8,0,3" />
                     <TextBlock Foreground="{StaticResource MutedBrush}"><Run Text="{Binding ScannedFiles, Mode=OneWay, StringFormat={}{0:N0}}"/><Run Text=" 个文件"/></TextBlock>
                 </StackPanel>
@@ -90,7 +90,7 @@
             </Border>
             <Border Grid.Column="3" Style="{StaticResource Card}" Margin="8,0,0,0">
                 <StackPanel>
-                    <TextBlock Text="扫描统计" Foreground="{StaticResource MutedBrush}" />
+                    <TextBlock Text="导入统计" Foreground="{StaticResource MutedBrush}" />
                     <TextBlock FontSize="18" FontWeight="SemiBold" Margin="0,8,0,3"><Run Text="{Binding ScannedDirectories, Mode=OneWay, StringFormat={}{0:N0}}"/><Run Text=" 个目录"/></TextBlock>
                     <TextBlock Foreground="{StaticResource MutedBrush}"><Run Text="耗时 "/><Run Text="{Binding ElapsedText, Mode=OneWay}"/><Run Text=" · 跳过 "/><Run Text="{Binding AccessErrorCount, Mode=OneWay}"/></TextBlock>
                 </StackPanel>
@@ -104,7 +104,7 @@
                         <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
                         <StackPanel Margin="6,4,0,12">
                             <TextBlock Text="占用最大的目录" FontSize="18" FontWeight="SemiBold" />
-                            <TextBlock Text="按扫描范围内的总占用排序；百分比相对于本次扫描总量。" Foreground="{StaticResource MutedBrush}" Margin="0,4,0,0" />
+                            <TextBlock Text="根据 WizTree CSV 重建目录容量；百分比相对于导入文件总量。" Foreground="{StaticResource MutedBrush}" Margin="0,4,0,0" />
                         </StackPanel>
                         <DataGrid Grid.Row="1" ItemsSource="{Binding LargestDirectories}">
                             <DataGrid.Columns>
@@ -126,7 +126,7 @@
                 <TabItem Header="目录树">
                     <Grid Margin="14">
                         <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
-                        <TextBlock Text="展开目录查看各部分占用；重解析点与符号链接会被跳过，避免重复统计。" Foreground="{StaticResource MutedBrush}" Margin="4,3,0,12" />
+                        <TextBlock Text="展开目录查看 CSV 中各部分占用；目录统计由文件记录重新汇总，避免重复计算。" Foreground="{StaticResource MutedBrush}" Margin="4,3,0,12" />
                         <TreeView Grid.Row="1" ItemsSource="{Binding DirectoryRoots}" VirtualizingStackPanel.IsVirtualizing="True" VirtualizingStackPanel.VirtualizationMode="Recycling" BorderThickness="0" Padding="6" />
                     </Grid>
                 </TabItem>
@@ -134,7 +134,7 @@
                 <TabItem Header="最大文件">
                     <Grid Margin="10">
                         <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
-                        <TextBlock Text="显示本次扫描中最大的 2,000 个文件。此页面只做分析，不会自动选择删除。" Foreground="{StaticResource MutedBrush}" Margin="6,4,0,12" />
+                        <TextBlock Text="显示 CSV 中最大的 2,000 个文件。此页面只做分析，不会自动选择删除。" Foreground="{StaticResource MutedBrush}" Margin="6,4,0,12" />
                         <DataGrid Grid.Row="1" ItemsSource="{Binding LargestFiles}">
                             <DataGrid.Columns>
                                 <DataGridTextColumn Header="文件名" Binding="{Binding Name, Mode=OneWay}" Width="230" />
@@ -151,7 +151,7 @@
                     <Grid Margin="10">
                         <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
                         <Border Background="#FFF7E8" BorderBrush="#F3D49A" BorderThickness="1" CornerRadius="8" Padding="12" Margin="2,2,2,12">
-                            <TextBlock Foreground="#7B5514" TextWrapping="Wrap"><Run FontWeight="SemiBold" Text="安全说明："/><Run Text="建议清理项会默认勾选；下载文件、安装包和超大文件必须手动勾选。所有删除均进入回收站，系统关键路径会被再次拦截。"/></TextBlock>
+                            <TextBlock Foreground="#7B5514" TextWrapping="Wrap"><Run FontWeight="SemiBold" Text="安全说明："/><Run Text="优先显示明确可重建的旧临时文件、缓存、着色器缓存和旧安装包；Skill、插件运行目录及其中的 README、SKILL.md、脚本和资源始终受保护。删除前会核对当前文件，清理为永久删除且无法从回收站恢复。"/></TextBlock>
                         </Border>
                         <Grid Grid.Row="1">
                             <Grid.ColumnDefinitions><ColumnDefinition Width="310"/><ColumnDefinition Width="12"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
@@ -172,26 +172,26 @@
                                 <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
                                 <Grid Margin="2,0,2,8">
                                     <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-                                    <StackPanel><TextBlock Text="{Binding SelectedCleanupGroup.Title}" FontWeight="SemiBold" FontSize="17"/><TextBlock Text="{Binding SelectedCleanupGroup.SelectedSummary}" Foreground="{StaticResource MutedBrush}" Margin="0,3,0,0"/></StackPanel>
-                                    <Button Grid.Column="1" Content="全选本组" Click="SelectGroup_Click" Style="{StaticResource SecondaryButton}" Margin="8,0" />
+                                    <StackPanel><TextBlock Text="{Binding SelectedCleanupGroup.Title}" FontWeight="SemiBold" FontSize="17"/><TextBlock Foreground="{StaticResource MutedBrush}" Margin="0,3,0,0"><Run Text="{Binding SelectedCleanupGroup.SelectedSummary, Mode=OneWay}"/><Run Text=" · 按来源或目录整批选择"/></TextBlock></StackPanel>
+                                    <Button Grid.Column="1" Content="全选分类" Click="SelectGroup_Click" Style="{StaticResource SecondaryButton}" Margin="8,0" />
                                     <Button Grid.Column="2" Content="清空选择" Click="ClearGroup_Click" Style="{StaticResource SecondaryButton}" />
                                 </Grid>
-                                <DataGrid Grid.Row="1" ItemsSource="{Binding SelectedCleanupGroup.Candidates}" IsReadOnly="False">
+                                <DataGrid Grid.Row="1" ItemsSource="{Binding SelectedCleanupGroup.Buckets}" IsReadOnly="False">
                                     <DataGrid.Columns>
                                         <DataGridTemplateColumn Header="选择" Width="60"><DataGridTemplateColumn.CellTemplate><DataTemplate><CheckBox IsChecked="{Binding IsSelected, UpdateSourceTrigger=PropertyChanged}" HorizontalAlignment="Center" VerticalAlignment="Center"/></DataTemplate></DataGridTemplateColumn.CellTemplate></DataGridTemplateColumn>
-                                        <DataGridTextColumn Header="文件" Binding="{Binding Name, Mode=OneWay}" Width="210" IsReadOnly="True" />
-                                        <DataGridTextColumn Header="路径" Binding="{Binding FullPath, Mode=OneWay}" Width="*" IsReadOnly="True" />
-                                        <DataGridTextColumn Header="大小" Binding="{Binding Size, Mode=OneWay, Converter={StaticResource ByteSizeConverter}}" Width="105" IsReadOnly="True" />
-                                        <DataGridTextColumn Header="修改时间" Binding="{Binding LastWriteTime, Mode=OneWay, StringFormat={}{0:yyyy-MM-dd}}" Width="105" IsReadOnly="True" />
-                                        <DataGridTemplateColumn Header="" Width="76"><DataGridTemplateColumn.CellTemplate><DataTemplate><Button Content="定位" Tag="{Binding FullPath}" Click="Reveal_Click" Style="{StaticResource SecondaryButton}" Padding="9,4"/></DataTemplate></DataGridTemplateColumn.CellTemplate></DataGridTemplateColumn>
+                                        <DataGridTextColumn Header="来源/目录分类" Binding="{Binding Title, Mode=OneWay}" Width="230" IsReadOnly="True" />
+                                        <DataGridTextColumn Header="位置" Binding="{Binding LocationPath, Mode=OneWay}" Width="*" IsReadOnly="True" />
+                                        <DataGridTextColumn Header="文件数" Binding="{Binding FileCount, Mode=OneWay, StringFormat={}{0:N0}}" Width="90" IsReadOnly="True" />
+                                        <DataGridTextColumn Header="大小" Binding="{Binding TotalSize, Mode=OneWay, Converter={StaticResource ByteSizeConverter}}" Width="105" IsReadOnly="True" />
+                                        <DataGridTemplateColumn Header="" Width="76"><DataGridTemplateColumn.CellTemplate><DataTemplate><Button Content="定位" Tag="{Binding LocationPath}" Click="Reveal_Click" Style="{StaticResource SecondaryButton}" Padding="9,4"/></DataTemplate></DataGridTemplateColumn.CellTemplate></DataGridTemplateColumn>
                                     </DataGrid.Columns>
                                 </DataGrid>
                             </Grid>
                         </Grid>
                         <Grid Grid.Row="2" Margin="2,12,2,2">
                             <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-                            <TextBlock Text="清理前会显示最终确认；清理失败的占用文件会保留在列表中。" Foreground="{StaticResource MutedBrush}" VerticalAlignment="Center" />
-                            <Button Grid.Column="1" Content="清理已选择项目" Style="{StaticResource PrimaryButton}" Click="CleanSelected_Click" IsEnabled="{Binding IsNotScanning}" />
+                            <TextBlock Text="被其他应用占用的文件会自动跳过并汇总报告，不再逐个弹出系统错误窗口。" Foreground="{StaticResource MutedBrush}" VerticalAlignment="Center" />
+                            <Button Grid.Column="1" Content="永久删除已选择项目" Style="{StaticResource PrimaryButton}" Click="CleanSelected_Click" IsEnabled="{Binding IsNotScanning}" />
                         </Grid>
                     </Grid>
                 </TabItem>

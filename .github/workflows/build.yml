@@ -35,7 +35,7 @@ jobs:
         run: dotnet run --project tests/CleanC.App.SmokeTests/CleanC.App.SmokeTests.csproj --configuration Release --no-build
 
       - name: Publish Windows app
-        run: dotnet publish src/CleanC.App/CleanC.App.csproj --configuration Release --runtime win-x64 --self-contained false --no-restore --output artifacts/CleanC-win-x64
+        run: dotnet publish src/CleanC.App/CleanC.App.csproj --configuration Release --runtime win-x64 --self-contained false --output artifacts/CleanC-win-x64
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4

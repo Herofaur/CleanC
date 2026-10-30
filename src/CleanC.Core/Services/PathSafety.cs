@@ -4,6 +4,7 @@ public sealed class PathSafety
 {
     private readonly string _systemDrive;
     private readonly string[] _protectedRoots;
+    private readonly string[] _explicitCleanupRoots;
     private readonly HashSet<string> _protectedFiles;
 
     public PathSafety(string? systemDrive = null)
@@ -23,6 +24,12 @@ public sealed class PathSafety
             Combine("$Recycle.Bin")
         ];
 
+        _explicitCleanupRoots =
+        [
+            Combine("ProgramData", "NVIDIA Corporation", "NVIDIA App", "UpdateFramework", "ota-artifacts"),
+            Combine("ProgramData", "LGHUB", "cache")
+        ];
+
         _protectedFiles = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
             Normalize(Combine("pagefile.sys")),
@@ -35,8 +42,28 @@ public sealed class PathSafety
     public bool IsProtected(string path)
     {
         var normalized = Normalize(path);
+        if (IsSkillOrPluginRuntimePath(normalized))
+        {
+            return true;
+        }
+
+        if (_explicitCleanupRoots.Any(root => IsWithin(normalized, root)))
+        {
+            return false;
+        }
+
         return _protectedFiles.Contains(normalized) ||
                _protectedRoots.Any(root => IsWithin(normalized, root));
+    }
+
+    private static bool IsSkillOrPluginRuntimePath(string path)
+    {
+        var normalized = path.Replace('/', '\\').ToLowerInvariant();
+        return normalized.Contains("\\.agents\\skills\\", StringComparison.Ordinal) ||
+               normalized.Contains("\\.codex\\skills\\", StringComparison.Ordinal) ||
+               normalized.Contains("\\.codex\\plugins\\", StringComparison.Ordinal) ||
+               normalized.Contains("\\skills\\", StringComparison.Ordinal) ||
+               normalized.EndsWith("\\skills", StringComparison.Ordinal);
     }
 
     public bool IsWithin(string candidate, string parent)

@@ -138,7 +138,11 @@ public sealed class DiskScanner
             RootDirectory = rootNode,
             LargestDirectories = allDirectories.OrderByDescending(directory => directory.Size).Take(2_000).ToArray(),
             LargestFiles = largestFiles.UnorderedItems.Select(item => item.Element).OrderByDescending(file => file.Size).ToArray(),
-            CleanupGroups = cleanupGroups.Values.OrderBy(group => group.Level).ThenByDescending(group => group.TotalSize).ToArray(),
+            CleanupGroups = cleanupGroups.Values
+                .OrderBy(group => group.Level)
+                .ThenBy(group => CleanupGroupPriority.Get(group.Id))
+                .ThenByDescending(group => group.TotalSize)
+                .ToArray(),
             Errors = errors,
             Elapsed = stopwatch.Elapsed
         };

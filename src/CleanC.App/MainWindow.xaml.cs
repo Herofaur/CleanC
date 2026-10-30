@@ -24,16 +24,18 @@ public partial class MainWindow : Window
 
     private void Browse_Click(object sender, RoutedEventArgs e)
     {
-        var dialog = new OpenFolderDialog
+        var dialog = new OpenFileDialog
         {
-            Title = "选择要扫描的磁盘或文件夹",
-            InitialDirectory = Directory.Exists(_viewModel.ScanPath) ? _viewModel.ScanPath : null,
-            Multiselect = false
+            Title = "选择 WizTree 导出的 CSV 文件",
+            Filter = "WizTree CSV 文件 (*.csv)|*.csv|所有文件 (*.*)|*.*",
+            CheckFileExists = true,
+            Multiselect = false,
+            InitialDirectory = File.Exists(_viewModel.CsvPath) ? Path.GetDirectoryName(_viewModel.CsvPath) : null
         };
 
         if (dialog.ShowDialog(this) == true)
         {
-            _viewModel.ScanPath = dialog.FolderName;
+            _viewModel.CsvPath = dialog.FileName;
         }
     }
 
@@ -41,11 +43,11 @@ public partial class MainWindow : Window
     {
         try
         {
-            await _viewModel.StartScanAsync();
+            await _viewModel.ImportCsvAsync();
         }
         catch (Exception exception)
         {
-            MessageBox.Show(this, exception.Message, "无法开始扫描", MessageBoxButton.OK, MessageBoxImage.Error);
+            MessageBox.Show(this, exception.Message, "无法导入 CSV", MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
 
@@ -95,26 +97,28 @@ public partial class MainWindow : Window
             : string.Empty;
         var confirmation = MessageBox.Show(
             this,
-            $"将 {selected.Count:N0} 个文件（{SizeFormatter.Format(totalSize)}）移动到回收站。{warning}\n\n是否继续？",
-            "确认清理",
+            $"将永久删除 {selected.Count:N0} 个文件（{SizeFormatter.Format(totalSize)}）。{warning}\n\n删除后无法从回收站恢复，是否继续？",
+            "确认永久删除",
             MessageBoxButton.YesNo,
-            confirmRequired > 0 ? MessageBoxImage.Warning : MessageBoxImage.Question);
+            MessageBoxImage.Warning);
 
         if (confirmation != MessageBoxResult.Yes)
         {
             return;
         }
 
-        _viewModel.SetCleanupStatus("正在将所选文件移动到回收站…");
-        var result = await _cleanupService.MoveToRecycleBinAsync(selected.Select(item => item.FullPath));
-        _viewModel.RemoveCleanedFiles(result.SucceededPaths);
+        _viewModel.SetCleanupStatus("正在永久删除所选文件…");
+        var result = await _cleanupService.DeletePermanentlyAsync(
+            selected.Select(item => new CleanupRequest(item.FullPath, item.Size)));
+        _viewModel.RemoveProcessedCleanupItems(selected.Select(item => item.FullPath));
         _viewModel.SetCleanupStatus($"清理完成 · 成功 {result.SucceededPaths.Count:N0} 个，失败 {result.Failures.Count:N0} 个");
 
-        var message = $"已将 {result.SucceededPaths.Count:N0} 个文件移动到回收站。";
+        var message = $"已永久删除 {result.SucceededPaths.Count:N0} 个文件。";
         if (result.Failures.Count > 0)
         {
             var details = string.Join(Environment.NewLine, result.Failures.Take(5).Select(failure => $"• {failure.Path}\n  {failure.Message}"));
-            message += $"\n\n有 {result.Failures.Count:N0} 个文件未能处理：\n{details}";
+            message += $"\n\n有 {result.Failures.Count:N0} 个文件未能处理：\n{details}" +
+                       "\n\n本次选择已从当前列表隐藏；重新导入 CSV 可再次查看未删除的文件。";
         }
 
         MessageBox.Show(this, message, "清理结果", MessageBoxButton.OK,

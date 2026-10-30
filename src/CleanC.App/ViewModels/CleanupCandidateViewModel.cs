@@ -5,12 +5,23 @@ namespace CleanC.App.ViewModels;
 
 public sealed class CleanupCandidateViewModel : ObservableObject
 {
+    private static readonly HashSet<string> DefaultSelectedGroups = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "user-temp",
+        "windows-temp",
+        "shader-cache",
+        "browser-cache",
+        "application-cache",
+        "thumbnail-cache"
+    };
+
     private bool _isSelected;
 
     public CleanupCandidateViewModel(CleanupCandidate candidate)
     {
         Candidate = candidate;
-        _isSelected = candidate.Level == CleanupLevel.Recommended;
+        _isSelected = candidate.Level == CleanupLevel.Recommended &&
+                      DefaultSelectedGroups.Contains(candidate.GroupId);
     }
 
     public CleanupCandidate Candidate { get; }

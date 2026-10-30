@@ -9,11 +9,11 @@ namespace CleanC.App.ViewModels;
 
 public sealed class MainViewModel : ObservableObject
 {
-    private readonly DiskScanner _scanner = new();
+    private readonly WizTreeCsvImporter _csvImporter = new();
     private CancellationTokenSource? _scanCancellation;
-    private string _scanPath = Path.GetPathRoot(Environment.SystemDirectory) ?? @"C:\";
+    private string _csvPath = string.Empty;
     private bool _isScanning;
-    private string _statusText = "准备就绪，选择磁盘后开始扫描";
+    private string _statusText = "准备就绪，请选择 WizTree 导出的 CSV 文件";
     private string _currentPath = string.Empty;
     private string _elapsedText = "--";
     private long _scannedBytes;
@@ -24,10 +24,10 @@ public sealed class MainViewModel : ObservableObject
     private DriveSpaceInfo? _drive;
     private CleanupGroupViewModel? _selectedCleanupGroup;
 
-    public string ScanPath
+    public string CsvPath
     {
-        get => _scanPath;
-        set => SetProperty(ref _scanPath, value);
+        get => _csvPath;
+        set => SetProperty(ref _csvPath, value);
     }
 
     public bool IsScanning
@@ -123,25 +123,33 @@ public sealed class MainViewModel : ObservableObject
     public IReadOnlyList<CleanupCandidateViewModel> GetSelectedCleanupItems() =>
         CleanupGroups.SelectMany(group => group.Candidates).Where(candidate => candidate.IsSelected).ToArray();
 
-    public async Task StartScanAsync()
+    public async Task ImportCsvAsync()
     {
         if (IsScanning)
         {
             return;
         }
 
-        var normalizedPath = Path.GetFullPath(ScanPath);
-        if (!Directory.Exists(normalizedPath))
+        if (string.IsNullOrWhiteSpace(CsvPath))
         {
-            throw new DirectoryNotFoundException($"扫描路径不存在：{normalizedPath}");
+            throw new InvalidOperationException("请先选择 WizTree 导出的 CSV 文件。");
+        }
+
+        var normalizedPath = Path.GetFullPath(CsvPath);
+        if (!File.Exists(normalizedPath))
+        {
+            throw new FileNotFoundException("CSV 文件不存在。", normalizedPath);
+        }
+        if (!Path.GetExtension(normalizedPath).Equals(".csv", StringComparison.OrdinalIgnoreCase))
+        {
+            throw new InvalidDataException("请选择扩展名为 .csv 的 WizTree 导出文件。");
         }
 
         ResetResults();
-        ScanPath = normalizedPath;
-        Drive = DiskInfoService.GetForPath(normalizedPath);
+        CsvPath = normalizedPath;
         _scanCancellation = new CancellationTokenSource();
         IsScanning = true;
-        StatusText = "正在扫描，请稍候…";
+        StatusText = "正在分析 WizTree CSV，请稍候…";
 
         var progress = new Progress<ScanProgress>(update =>
         {
@@ -150,19 +158,22 @@ public sealed class MainViewModel : ObservableObject
             ScannedDirectories = update.ScannedDirectories;
             ScannedBytes = update.DiscoveredBytes;
             ElapsedText = FormatElapsed(update.Elapsed);
-            StatusText = $"正在扫描 · {update.ScannedFiles:N0} 个文件";
+            StatusText = $"正在分析 CSV · {update.ScannedFiles:N0} 个文件";
         });
 
         try
         {
-            var result = await _scanner.ScanAsync(normalizedPath, progress, _scanCancellation.Token);
+            var result = await _csvImporter.ImportAsync(normalizedPath, progress, _scanCancellation.Token);
+            Drive = DiskInfoService.GetForPath(result.RootPath);
             ApplyResult(result);
-            StatusText = $"扫描完成 · 用时 {FormatElapsed(result.Elapsed)}";
-            CurrentPath = $"发现 {result.Errors.Count:N0} 个无法访问的项目；这通常是 Windows 权限保护导致的。";
+            StatusText = $"CSV 分析完成 · 用时 {FormatElapsed(result.Elapsed)}";
+            CurrentPath = result.Errors.Count == 0
+                ? $"已读取 {result.FileCount:N0} 个文件；清理时会再次检查文件是否仍存在。"
+                : $"有 {result.Errors.Count:N0} 行无法识别或被跳过；其余数据已正常导入。";
         }
         catch (OperationCanceledException)
         {
-            StatusText = "扫描已取消";
+            StatusText = "CSV 分析已取消";
             CurrentPath = string.Empty;
         }
         finally
@@ -175,13 +186,36 @@ public sealed class MainViewModel : ObservableObject
 
     public void CancelScan() => _scanCancellation?.Cancel();
 
-    public void RemoveCleanedFiles(IEnumerable<string> paths)
+    public void RemoveProcessedCleanupItems(IEnumerable<string> paths)
     {
         var removed = new HashSet<string>(paths, StringComparer.OrdinalIgnoreCase);
-        foreach (var group in CleanupGroups)
+        if (removed.Count == 0)
         {
-            group.RemovePaths(removed);
+            return;
         }
+
+        var selectedIndex = SelectedCleanupGroup is null ? -1 : CleanupGroups.IndexOf(SelectedCleanupGroup);
+        var selectedWasRemoved = false;
+        for (var index = CleanupGroups.Count - 1; index >= 0; index--)
+        {
+            var group = CleanupGroups[index];
+            group.RemovePaths(removed);
+            if (group.Candidates.Count > 0)
+            {
+                continue;
+            }
+
+            selectedWasRemoved |= ReferenceEquals(group, SelectedCleanupGroup);
+            CleanupGroups.RemoveAt(index);
+        }
+
+        if (selectedWasRemoved)
+        {
+            SelectedCleanupGroup = CleanupGroups.Count == 0
+                ? null
+                : CleanupGroups[Math.Min(Math.Max(selectedIndex, 0), CleanupGroups.Count - 1)];
+        }
+
         PotentialCleanupBytes = CleanupGroups.Sum(group => group.TotalSize);
     }
 

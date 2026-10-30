@@ -13,9 +13,9 @@
     <AssemblyName>CleanC</AssemblyName>
     <RootNamespace>CleanC.App</RootNamespace>
     <ApplicationIcon />
-    <Version>0.1.0</Version>
+    <Version>0.6.0</Version>
     <Authors>CleanC contributors</Authors>
-    <Description>安全优先的 Windows 磁盘分析与清理助手</Description>
+    <Description>通过 WizTree CSV 智能识别 Windows 可清理文件的安全清理助手</Description>
   </PropertyGroup>
 
 </Project>
